@@ -1,0 +1,458 @@
+Here is the fully upgraded code with the dynamic **Countdown Timer** (Option 1) built cleanly right into the top card.
+
+To give you the exact aesthetic look you asked for, I have also embedded a custom SVG background pattern directly into the CSS. It creates very faint, elegant **crescent moon shades** using extremely soft, low-visibility greys and yellows (`opacity: 0.03`). It acts as a subtle background pattern that doesn't distract from reading the times.
+
+Replace the contents of your `index.html` file with this update:
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Daily Prayer Timings</title>
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --card-bg: #1e293b;
+            --accent-color: #10b981;
+            --accent-muted: #047857;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --border-color: #334155;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            /* Soft, barely-visible crescent moon & star repeating pattern in light grey and pale yellow */
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='80' height='80' viewBox='0 0 80 80'%3E%3Cg opacity='0.03'%3E%3Cpath d='M15 10 A 10 10 0 1 0 25 20 A 8 8 0 1 1 15 10 Z' fill='%23e2e8f0'/%3E%3Cpolygon points='27,8 29,12 33,12 30,15 31,19 27,17 23,19 24,15 21,12 25,12' fill='%23fef08a'/%3E%3Cpath d='M55 50 A 10 10 0 1 0 65 60 A 8 8 0 1 1 55 50 Z' fill='%23e2e8f0'/%3E%3Cpolygon points='67,48 69,52 73,52 70,55 71,59 67,57 63,59 64,55 61,52 65,52' fill='%23fef08a'/%3E%3C/g%3E%3C/svg%3E");
+            color: var(--text-main);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+            gap: 20px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 420px;
+            background-color: var(--card-bg);
+            border-radius: 24px;
+            padding: 28px 20px;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
+            border: 1px solid var(--border-color);
+            position: relative;
+            z-index: 1;
+        }
+
+        h1 {
+            font-size: 24px;
+            font-weight: 700;
+            text-align: center;
+            margin-bottom: 4px;
+            letter-spacing: -0.5px;
+        }
+
+        .date-display {
+            font-size: 14px;
+            color: var(--text-muted);
+            text-align: center;
+            margin-bottom: 16px;
+        }
+
+        /* Countdown Widget Box Styling */
+        .countdown-box {
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+            border: 1px solid var(--border-color);
+            border-radius: 14px;
+            padding: 12px;
+            text-align: center;
+            margin-bottom: 20px;
+            font-size: 15px;
+            font-weight: 600;
+            color: #fef08a; /* Soft warning yellow */
+        }
+        
+        .countdown-time {
+            font-size: 18px;
+            font-weight: 800;
+            color: var(--accent-color);
+            display: block;
+            margin-top: 2px;
+        }
+
+        .form-group {
+            margin-bottom: 24px;
+        }
+
+        label {
+            display: block;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--text-muted);
+            margin-bottom: 8px;
+        }
+
+        select {
+            width: 100%;
+            padding: 14px 16px;
+            font-size: 16px;
+            background-color: #0f172a;
+            border: 1px solid #475569;
+            border-radius: 12px;
+            color: var(--text-main);
+            outline: none;
+            cursor: pointer;
+            -webkit-appearance: none;
+            appearance: none;
+            background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+            background-repeat: no-repeat;
+            background-position: right 16px center;
+            background-size: 16px;
+        }
+
+        select:focus {
+            border-color: var(--accent-color);
+        }
+
+        .prayer-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .prayer-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 20px;
+            background-color: #151f32;
+            border-radius: 14px;
+            border: 1px solid transparent;
+            transition: all 0.3s ease;
+        }
+
+        /* Dynamically highlighted state for active prayer slot */
+        .prayer-row.active-now {
+            background: linear-gradient(135deg, #064e3b 0%, #022c22 100%);
+            border-color: var(--accent-color);
+            box-shadow: 0 0 15px rgba(16, 185, 129, 0.2);
+        }
+
+        .prayer-row.active-now .prayer-name {
+            color: var(--accent-color);
+            font-weight: 700;
+        }
+
+        .prayer-row.sunrise-row {
+            background-color: #1e293b;
+            border: 1px dashed #475569;
+            opacity: 0.75;
+            padding: 12px 20px;
+        }
+
+        .prayer-name {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text-main);
+        }
+
+        .prayer-time {
+            font-size: 18px;
+            font-weight: 700;
+            color: #fff;
+        }
+
+        .status {
+            font-size: 13px;
+            color: var(--text-muted);
+            text-align: center;
+            min-height: 20px;
+        }
+
+        .quote-container {
+            width: 100%;
+            max-width: 420px;
+            background-color: var(--card-bg);
+            border-radius: 20px;
+            padding: 20px;
+            border: 1px solid var(--border-color);
+            text-align: center;
+            z-index: 1;
+        }
+
+        .quote-header {
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            color: var(--accent-color);
+            letter-spacing: 1px;
+            margin-bottom: 12px;
+        }
+
+        .quote-text {
+            font-size: 14px;
+            line-height: 1.6;
+            margin-bottom: 12px;
+            color: var(--text-main);
+        }
+
+        .quote-text.tamil {
+            color: #cbd5e1;
+            border-top: 1px solid #334155;
+            padding-top: 10px;
+        }
+
+        .quote-ref {
+            font-size: 12px;
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        @media (max-width: 360px) {
+            .container, .quote-container { padding: 16px; }
+            .prayer-row { padding: 12px 14px; }
+            .prayer-time { font-size: 16px; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>Prayer Timings</h1>
+        <div class="date-display" id="date-text">-- --- ----</div>
+        
+        <!-- Option 1: Live Tracker Countdown Banner Box -->
+        <div class="countdown-box" id="countdown-banner">
+            Loading next prayer tracking status...
+        </div>
+        
+        <div class="form-group">
+            <label for="city-select">Choose Location</label>
+            <select id="city-select">
+                <option value="coimbatore" selected>Coimbatore</option>
+                <option value="chennai">Chennai</option>
+            </select>
+        </div>
+
+        <div class="prayer-list">
+            <div class="prayer-row" id="row-Fajr">
+                <span class="prayer-name">Fajr (Dawn)</span>
+                <span class="prayer-time" id="time-Fajr">--:--</span>
+            </div>
+            <div class="prayer-row sunrise-row" id="row-Sunrise">
+                <span class="prayer-name">Sunrise (Fajr Ends)</span>
+                <span class="prayer-time" id="time-Sunrise">--:--</span>
+            </div>
+            <div class="prayer-row" id="row-Dhuhr">
+                <span class="prayer-name">Dhuhr (Noon)</span>
+                <span class="prayer-time" id="time-Dhuhr">--:--</span>
+            </div>
+            <div class="prayer-row" id="row-Asr">
+                <span class="prayer-name">Asr (Afternoon)</span>
+                <span class="prayer-time" id="time-Asr">--:--</span>
+            </div>
+            <div class="prayer-row" id="row-Maghrib">
+                <span class="prayer-name">Maghrib (Sunset)</span>
+                <span class="prayer-time" id="time-Maghrib">--:--</span>
+            </div>
+            <div class="prayer-row" id="row-Isha">
+                <span class="prayer-name">Isha (Night)</span>
+                <span class="prayer-time" id="time-Isha">--:--</span>
+            </div>
+        </div>
+        
+        <p class="status" id="status-text">Initializing daily schedule...</p>
+        <button id="notify-btn" style="display:none; width:100%; padding:10px; margin-top:10px; background:var(--accent-color); border:none; border-radius:8px; color:white; font-weight:bold;">Enable 30-Min Alerts</button>
+    </div>
+
+    <div class="quote-container">
+        <div class="quote-header">Verse of the Day</div>
+        <div class="quote-text" id="eng-quote">"Indeed, with hardship comes ease."</div>
+        <div class="quote-text tamil" id="tam-quote">"நிச்சயமாக துன்பத்துடன் இன்பம் இருக்கிறது."</div>
+        <div class="quote-ref" id="ref-quote">Quran 94:6</div>
+    </div>
+
+    <script>
+        const locations = {
+            coimbatore: { lat: 11.0168, lon: 76.9558 },
+            chennai: { lat: 13.0827, lon: 80.2707 }
+        };
+
+        const targetPrayers = ['Fajr', 'Sunrise', 'Dhuhr', 'Asr', 'Maghrib', 'Isha'];
+        let globalTimingsRaw = {}; 
+
+        const quranQuotes = [
+            { eng: "Indeed, Allah is with the patient.", tam: "நிச்சயமாக அல்லாஹ் பொறுமையாளர்களுடன் இருக்கிறான்.", ref: "Quran 2:153" },
+            { eng: "And whoever relies upon Allah - then He is sufficient for him.", tam: "மேலும், எவர் அல்லாஹ்வை முற்றிலும் நம்புகிறாரோ, அவருக்கு அவன் போதுமானவன்.", ref: "Quran 65:3" },
+            { eng: "So remember Me; I will remember you.", tam: "ஆகவே, என்னை நினையுங்கள்; நானும் உங்களை நினைப்பேன்.", ref: "Quran 2:152" },
+            { eng: "My mercy encompasses all things.", tam: "என்னுடைய பெருங்கருணை எல்லாப் பொருட்களையும் சூழ்ந்திருக்கிறது.", ref: "Quran 7:156" },
+            { eng: "Indeed, my Lord is near and responsive.", tam: "நிச்சயமாக என் இறைவன் மிக நெருக்கமானவன்; பிரார்த்தனைகளை ஏற்பவன்.", ref: "Quran 11:61" }
+        ];
+
+        const citySelect = document.getElementById('city-select');
+        const statusText = document.getElementById('status-text');
+        const dateDisplay = document.getElementById('date-text');
+        const countdownBanner = document.getElementById('countdown-banner');
+
+        window.addEventListener('DOMContentLoaded', () => {
+            displayCurrentDate();
+            displayDailyQuote();
+            updateTimings();
+            
+            // Core heartbeat loop running every single second for precise countdown delivery
+            setInterval(() => {
+                highlightActivePrayerAndCountdown();
+            }, 1000);
+        });
+
+        citySelect.addEventListener('change', updateTimings);
+
+        function displayCurrentDate() {
+            const options = { weekday: 'long', year: 'numeric', month: 'short', day: 'numeric' };
+            dateDisplay.innerText = new Date().toLocaleDateString('en-US', options);
+        }
+
+        function displayDailyQuote() {
+            const day = new Date().getDate();
+            const index = day % quranQuotes.length; 
+            document.getElementById('eng-quote').innerText = `"${quranQuotes[index].eng}"`;
+            document.getElementById('tam-quote').innerText = `"${quranQuotes[index].tam}"`;
+            document.getElementById('ref-quote').innerText = quranQuotes[index].ref;
+        }
+
+        async function updateTimings() {
+            const selectedCity = citySelect.value;
+            const coords = locations[selectedCity];
+            
+            try {
+                const today = new Date();
+                const dateStr = `${today.getDate()}-${today.getMonth() + 1}-${today.getFullYear()}`;
+                
+                const res = await fetch(`https://api.aladhan.com/v1/timings/${dateStr}?latitude=${coords.lat}&longitude=${coords.lon}&method=1`);
+                const data = await res.json();
+                
+                globalTimingsRaw = data.data.timings;
+                
+                targetPrayers.forEach(prayer => {
+                    const element = document.getElementById(`time-${prayer}`);
+                    if (element && globalTimingsRaw[prayer]) {
+                        element.innerText = convertTo12Hour(globalTimingsRaw[prayer]);
+                    }
+                });
+
+                statusText.innerText = "Timetable active.";
+                highlightActivePrayerAndCountdown();
+            } catch (err) {
+                statusText.innerText = "Offline. Verification failed.";
+            }
+        }
+
+        function highlightActivePrayerAndCountdown() {
+            if (!globalTimingsRaw.Fajr) return;
+
+            const now = new Date();
+            const currentTotalSeconds = now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds();
+            const currentTotalMinutes = now.getHours() * 60 + now.getMinutes();
+
+            const parseToSeconds = (timeStr) => {
+                const [h, m] = timeStr.split(':').map(Number);
+                return h * 3600 + m * 60;
+            };
+
+            const parsedMinutes = (timeStr) => {
+                const [h, m] = timeStr.split(':').map(Number);
+                return h * 60 + m;
+            };
+
+            const secondsMap = {
+                Fajr: parseToSeconds(globalTimingsRaw.Fajr),
+                Sunrise: parseToSeconds(globalTimingsRaw.Sunrise),
+                Dhuhr: parseToSeconds(globalTimingsRaw.Dhuhr),
+                Asr: parseToSeconds(globalTimingsRaw.Asr),
+                Maghrib: parseToSeconds(globalTimingsRaw.Maghrib),
+                Isha: parseToSeconds(globalTimingsRaw.Isha)
+            };
+
+            const minsMap = {
+                Fajr: parsedMinutes(globalTimingsRaw.Fajr),
+                Sunrise: parsedMinutes(globalTimingsRaw.Sunrise),
+                Dhuhr: parsedMinutes(globalTimingsRaw.Dhuhr),
+                Asr: parsedMinutes(globalTimingsRaw.Asr),
+                Maghrib: parsedMinutes(globalTimingsRaw.Maghrib),
+                Isha: parsedMinutes(globalTimingsRaw.Isha)
+            };
+
+            // 1. Reset active visual state classes
+            targetPrayers.forEach(p => document.getElementById(`row-${p}`).classList.remove('active-now'));
+
+            // 2. Identify active target row and look up the next upcoming target details
+            let nextPrayerName = "Fajr";
+            let targetSeconds = secondsMap.Fajr;
+
+            if (currentTotalMinutes >= minsMap.Fajr && currentTotalMinutes < minsMap.Sunrise) {
+                document.getElementById('row-Fajr').classList.add('active-now');
+                nextPrayerName = "Dhuhr";
+                targetSeconds = secondsMap.Dhuhr;
+            } else if (currentTotalMinutes >= minsMap.Sunrise && currentTotalMinutes < minsMap.Dhuhr) {
+                nextPrayerName = "Dhuhr";
+                targetSeconds = secondsMap.Dhuhr;
+            } else if (currentTotalMinutes >= minsMap.Dhuhr && currentTotalMinutes < minsMap.Asr) {
+                document.getElementById('row-Dhuhr').classList.add('active-now');
+                nextPrayerName = "Asr";
+                targetSeconds = secondsMap.Asr;
+            } else if (currentTotalMinutes >= minsMap.Asr && currentTotalMinutes < minsMap.Maghrib) {
+                document.getElementById('row-Asr').classList.add('active-now');
+                nextPrayerName = "Maghrib";
+                targetSeconds = secondsMap.Maghrib;
+            } else if (currentTotalMinutes >= minsMap.Maghrib && currentTotalMinutes < minsMap.Isha) {
+                document.getElementById('row-Maghrib').classList.add('active-now');
+                nextPrayerName = "Isha";
+                targetSeconds = secondsMap.Isha;
+            } else {
+                // If it's currently past Isha or before Fajr, the active row is Isha
+                if (currentTotalMinutes >= minsMap.Isha) {
+                    document.getElementById('row-Isha').classList.add('active-now');
+                }
+                nextPrayerName = "Fajr";
+                // If it's past midnight, calculate remaining seconds normally, otherwise pad with a full 24 hours
+                targetSeconds = secondsMap.Fajr + (currentTotalMinutes >= minsMap.Isha ? 86400 : 0);
+            }
+
+            // 3. Compute precision difference metrics 
+            let diffSeconds = targetSeconds - currentTotalSeconds;
+            
+            const hours = Math.floor(diffSeconds / 3600);
+            const minutes = Math.floor((diffSeconds % 3600) / 60);
+            const seconds = diffSeconds % 60;
+
+            const formatPad = (num) => String(num).padStart(2, '0');
+            
+            countdownBanner.innerHTML = `Next Prayer: <span style="color:#fff">${nextPrayerName}</span><span class="countdown-time">${formatPad(hours)}h : ${formatPad(minutes)}m : ${formatPad(seconds)}s</span>`;
+        }
+
+        function convertTo12Hour(timeString) {
+            const [hours, minutes] = timeString.split(':');
+            let hour = parseInt(hours, 10);
+            const ampm = hour >= 12 ? 'PM' : 'AM';
+            hour = hour % 12 || 12;
+            return `${hour}:${minutes} ${ampm}`;
+        }
+    </script>
+</body>
+</html>
+
+```
